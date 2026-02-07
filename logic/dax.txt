@@ -1,0 +1,154 @@
+Average% = (AVERAGE('GM-report-H1_%'[January]) + AVERAGE('GM-report-H1_%'[February]) + AVERAGE('GM-report-H1_%'[March]) +AVERAGE('GM-report-H1_%'[April]) +AVERAGE('GM-report-H1_%'[May]) +AVERAGE('GM-report-H1_%'[June]) + AVERAGE('GM-report-H1_%'[July]) + AVERAGE('GM-report-H1_%'[August])+ AVERAGE('GM-report-H1_%'[September])+AVERAGE('GM-report-H1_%'[October])+AVERAGE('GM-report-H1_%'[November])+AVERAGE('GM-report-H1_%'[December]))/DISTINCTCOUNTNOBLANK('GM-report-H1_%'[Calculation period])
+
+AverageEUR = (SUM('GM-report-H1_EUR'[January]) + SUM('GM-report-H1_EUR'[February]) + SUM('GM-report-H1_EUR'[March]) +SUM('GM-report-H1_EUR'[April]) +SUM('GM-report-H1_EUR'[May]) +SUM('GM-report-H1_EUR'[June]) + SUM('GM-report-H1_EUR'[July]) + SUM('GM-report-H1_EUR'[August])+ SUM('GM-report-H1_EUR'[September])+ SUM('GM-report-H1_EUR'[October])+ SUM('GM-report-H1_EUR'[November])+ SUM('GM-report-H1_EUR'[December]))/DISTINCTCOUNTNOBLANK('GM-report-H1_EUR'[Calculation period])
+
+FormattedKPI = 
+VAR ActualKPI = SELECTEDVALUE('GM-report-H1_full_KPI'[KPIs])
+RETURN
+SWITCH(
+    ActualKPI,
+    "CM1 %", SUM('GM-report-H1_full_unpivot'[CM1]) / SUM('GM-report-H1_full_unpivot'[Turnover]),
+    "CM2 %", [CM2%_Calc],
+    "EBIT %", [Ebit%_Calc],
+    "Material ratio ", [Material%_Calc],
+    SUM('GM-report-H1_full_KPI'[Amount])
+)
+
+CM1%_Calc = 
+VAR Turnover = 
+    CALCULATE(
+        [Total], 
+        'GM-report-H1_full'[KPIs] = "Turnover"
+    )
+VAR CM1_Abszolut = 
+    CALCULATE(
+        [Total], 
+        'GM-report-H1_full'[KPIs] = "CM1"
+    )
+RETURN 
+    DIVIDE(CM1_Abszolut, Turnover, 0)
+
+
+Ebit%_Calc = 
+VAR TotalEBIT = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [EBIT (p.unit)])
+VAR TotalTurnover = SUM('GM-report-H1_full_unpivot'[Turnover])
+
+RETURN
+DIVIDE(
+    TotalEBIT, 
+    TotalTurnover, 
+    0
+)
+
+
+Labour%_Calc = 
+VAR TotalLabour = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [Labour costs EUR])
+VAR TotalTurnover = SUM('GM-report-H1_full_unpivot'[Turnover])
+
+RETURN
+DIVIDE(
+    TotalLabour, 
+    TotalTurnover, 
+    0
+)
+
+
+Machine%_Calc = 
+VAR TotalMachine = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [Machine costs EUR])
+VAR TotalSetup = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [Setup costs EUR])
+VAR TotalTurnover = SUM('GM-report-H1_full_unpivot'[Turnover])
+
+RETURN
+DIVIDE(
+    TotalMachine + TotalSetup, 
+    TotalTurnover, 
+    0
+)
+
+
+MaterialCost_Diff = 
+VAR LatestPeriod =
+    MAXX(
+        FILTER(
+            VALUES('GM-report-H1_full_unpivot'),
+            NOT( ISBLANK( 'GM-report-H1_full_unpivot'[Material costs EUR] ) )
+        ),
+        'GM-report-H1_full_unpivot'[Calculation period]
+    )
+
+VAR EarliestPeriod =
+    MINX(
+        FILTER(
+            VALUES('GM-report-H1_full_unpivot'),
+            NOT( ISBLANK( 'GM-report-H1_full_unpivot'[Material costs EUR] ) )
+        ),
+        'GM-report-H1_full_unpivot'[Calculation period]
+    )
+
+VAR LatestCost =
+    CALCULATE(
+        SUM('GM-report-H1_full_unpivot'[Material costs EUR]),
+        'GM-report-H1_full_unpivot'[Calculation period] = LatestPeriod
+    )
+VAR EarliestCost =
+    CALCULATE(
+        SUM('GM-report-H1_full_unpivot'[Material costs EUR]),
+        'GM-report-H1_full_unpivot'[Calculation period] = EarliestPeriod
+    )
+RETURN
+LatestCost - EarliestCost
+
+
+MaterialCost_Diff% = 
+VAR LatestPeriod =
+    MAXX(
+        FILTER(
+            VALUES('GM-report-H1_full_unpivot'),
+            NOT( ISBLANK( 'GM-report-H1_full_unpivot'[Material costs EUR] ) )
+        ),
+        'GM-report-H1_full_unpivot'[Calculation period]
+    )
+
+VAR EarliestPeriod =
+    MINX(
+        FILTER(
+            VALUES('GM-report-H1_full_unpivot'),
+            NOT( ISBLANK( 'GM-report-H1_full_unpivot'[Material costs EUR] ) )
+        ),
+        'GM-report-H1_full_unpivot'[Calculation period]
+    )
+
+VAR LatestCost =
+    CALCULATE(
+        SUM('GM-report-H1_full_unpivot'[Material costs EUR]),
+        'GM-report-H1_full_unpivot'[Calculation period] = LatestPeriod
+    )
+VAR EarliestCost =
+    CALCULATE(
+        SUM('GM-report-H1_full_unpivot'[Material costs EUR]),
+        'GM-report-H1_full_unpivot'[Calculation period] = EarliestPeriod
+    )
+RETURN
+(LatestCost/EarliestCost)-1
+
+
+
+Overhead%_Calc = 
+VAR TotalMatOH = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [Mat OH EUR])
+VAR TotalSGAmatOH = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [SG&A OH on mat EUR])
+VAR TotalSGAmanufOH = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [SG&A OH on manuf EUR])
+VAR TotalGAOH = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [G&A OH EUR])
+VAR TotalProdOH = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [Prod OH EUR])
+VAR TotalOutbOH = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [Outbound OH EUR])
+VAR TotalTurnover = SUM('GM-report-H1_full_unpivot'[Turnover])
+
+RETURN
+DIVIDE(
+    TotalMatOH + TotalSGAmatOH + TotalSGAmanufOH + TotalGAOH + TotalProdOH + TotalOutbOH,
+    TotalTurnover, 
+    0
+)
+
+
+HasMaterial = 
+IF(COUNTROWS(RELATEDTABLE('GM-report-H1_full_unpivot')) > 0, 1, 0)
