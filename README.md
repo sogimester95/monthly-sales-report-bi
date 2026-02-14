@@ -25,25 +25,25 @@ The solution leverages a robust **Star Schema** to connect multiple SharePoint-h
 - **Custom Visuals:** Integrated navigation and tooltips for instant KPI previews.
 - **Dictioniary:** Advanced Power BI function to decrease the loading time by using merging into main data tables.
 
-![KAM Dashboard View](logic/docs/screenshots/dashboard1-1.png)
+![KAM Dashboard View](logic/docs/dashboard1-1.png)
 
 ### 2. Purchasing & Procurement View
 - **Cost Driver Analysis:** Circle charts identifying TOP 3 materials with the highest monthly cost variance.
 - **Trend Tracking:** Area charts for EBIT, Volume, and Material Cost performance.
 
-![Purchasing View](logic/docs/screenshots/dashboard2.png)
+![Purchasing View](logic/docs/dashboard2.png)
 
 ### 3. Generic YTD Summary
 - **Advanced Navigation:** Bookmark-based toggles to switch between Scatter Charts and Detailed Matrix views.
 - **Profitability Gauges:** Real-time tracking against budget and target margins.
 
-![Generic YTD View](logic/docs/screenshots/dashboard3.png)
+![Generic YTD View](logic/docs/dashboard3.png)
 
 ### 4. Anomaly & Profitability Tracker (Data Integrity)
 - **Outlier Detection:** Flagging of non-compliant SAP entries (e.g., Negative Turnover, Material Ratio > 100%, EBIT % etc. anomalies).
 - **Strategic Focus:** Bottom 5 Customers and Bottom 3 Products identification based on negative total EBIT.
 
-![Anomaly & Profitability Tracker](logic/docs/screenshots/dashboard4.png)
+![Anomaly & Profitability Tracker](logic/docs/dashboard4.png)
 
 ## Technical Showcase (DAX & M)
 The project includes complex business logic, such as:
