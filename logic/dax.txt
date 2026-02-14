@@ -1,45 +1,15 @@
-Average% = (AVERAGE('GM-report-H1_%'[January]) + AVERAGE('GM-report-H1_%'[February]) + AVERAGE('GM-report-H1_%'[March]) +AVERAGE('GM-report-H1_%'[April]) +AVERAGE('GM-report-H1_%'[May]) +AVERAGE('GM-report-H1_%'[June]) + AVERAGE('GM-report-H1_%'[July]) + AVERAGE('GM-report-H1_%'[August])+ AVERAGE('GM-report-H1_%'[September])+AVERAGE('GM-report-H1_%'[October])+AVERAGE('GM-report-H1_%'[November])+AVERAGE('GM-report-H1_%'[December]))/DISTINCTCOUNTNOBLANK('GM-report-H1_%'[Calculation period])
+//CM1 % calculation - shouldn't be used average of CM1% values from main table
 
-AverageEUR = (SUM('GM-report-H1_EUR'[January]) + SUM('GM-report-H1_EUR'[February]) + SUM('GM-report-H1_EUR'[March]) +SUM('GM-report-H1_EUR'[April]) +SUM('GM-report-H1_EUR'[May]) +SUM('GM-report-H1_EUR'[June]) + SUM('GM-report-H1_EUR'[July]) + SUM('GM-report-H1_EUR'[August])+ SUM('GM-report-H1_EUR'[September])+ SUM('GM-report-H1_EUR'[October])+ SUM('GM-report-H1_EUR'[November])+ SUM('GM-report-H1_EUR'[December]))/DISTINCTCOUNTNOBLANK('GM-report-H1_EUR'[Calculation period])
-
-FormattedKPI = 
-VAR ActualKPI = SELECTEDVALUE('GM-report-H1_full_KPI'[KPIs])
-RETURN
-SWITCH(
-    ActualKPI,
-    "CM1 %", SUM('GM-report-H1_full_unpivot'[CM1]) / SUM('GM-report-H1_full_unpivot'[Turnover]),
-    "CM2 %", [CM2%_Calc],
-    "EBIT %", [Ebit%_Calc],
-    "Material ratio ", [Material%_Calc],
-    SUM('GM-report-H1_full_KPI'[Amount])
-)
-
-CM1%_Calc = 
-VAR Turnover = 
-    CALCULATE(
-        [Total], 
-        'GM-report-H1_full'[KPIs] = "Turnover"
-    )
-VAR CM1_Abszolut = 
-    CALCULATE(
-        [Total], 
-        'GM-report-H1_full'[KPIs] = "CM1"
-    )
-RETURN 
-    DIVIDE(CM1_Abszolut, Turnover, 0)
+CM1%_Calc = SUM('GM-report-H1_full_unpivot'[CM1])/SUM('GM-report-H1_full_unpivot'[Turnover])
 
 
-Ebit%_Calc = 
-VAR TotalEBIT = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [EBIT (p.unit)])
-VAR TotalTurnover = SUM('GM-report-H1_full_unpivot'[Turnover])
+//CM2 % calculation - shouldn't be used average of CM2% values from main table
 
-RETURN
-DIVIDE(
-    TotalEBIT, 
-    TotalTurnover, 
-    0
-)
+CM2%_Calc = SUM('GM-report-H1_full_unpivot'[CM2])/SUM('GM-report-H1_full_unpivot'[Turnover])
 
+
+
+//Calculate product's labour cost %
 
 Labour%_Calc = 
 VAR TotalLabour = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [Labour costs EUR])
@@ -53,6 +23,8 @@ DIVIDE(
 )
 
 
+//Calculate product's machine cost %
+
 Machine%_Calc = 
 VAR TotalMachine = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [Machine costs EUR])
 VAR TotalSetup = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [Setup costs EUR])
@@ -65,6 +37,8 @@ DIVIDE(
     0
 )
 
+
+//Define MaterialCost absolute differences between Months with values
 
 MaterialCost_Diff = 
 VAR LatestPeriod =
@@ -99,6 +73,8 @@ RETURN
 LatestCost - EarliestCost
 
 
+//Define MaterialCost differences in % between Months with values
+
 MaterialCost_Diff% = 
 VAR LatestPeriod =
     MAXX(
@@ -132,23 +108,35 @@ RETURN
 (LatestCost/EarliestCost)-1
 
 
+// Main KAM Matrix calculated to specify monthly averages and define unique formats by KPIs
 
-Overhead%_Calc = 
-VAR TotalMatOH = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [Mat OH EUR])
-VAR TotalSGAmatOH = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [SG&A OH on mat EUR])
-VAR TotalSGAmanufOH = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [SG&A OH on manuf EUR])
-VAR TotalGAOH = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [G&A OH EUR])
-VAR TotalProdOH = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [Prod OH EUR])
-VAR TotalOutbOH = SUMX('GM-report-H1_full_unpivot', [Sales qty - prev. month] * [Outbound OH EUR])
-VAR TotalTurnover = SUM('GM-report-H1_full_unpivot'[Turnover])
-
-RETURN
-DIVIDE(
-    TotalMatOH + TotalSGAmatOH + TotalSGAmanufOH + TotalGAOH + TotalProdOH + TotalOutbOH,
-    TotalTurnover, 
-    0
+FormattedKPI_with_Average = 
+IF(
+    HASONEVALUE('GM-report-H1_full_KPI'[Month]),
+    [FormattedKPI],
+    
+    VAR ActualKPI = SELECTEDVALUE('GM-report-H1_full_KPI'[KPIs])
+    RETURN
+    SWITCH(
+        ActualKPI,
+        "CM1 %", SUM('GM-report-H1_full_unpivot'[CM1]) / SUM('GM-report-H1_full_unpivot'[Turnover]),
+        "CM2 %", [CM2%_Calc],
+        "EBIT %", [Ebit%_Calc],
+        "Material ratio %", [Material%_Calc],
+        
+        AVERAGEX(
+            VALUES('GM-report-H1_full_KPI'[Month]),
+            CALCULATE(SUM('GM-report-H1_full_KPI'[Amount]))
+        )
+    )
 )
 
+SWITCH(SELECTEDVALUE('GM-report-H1_full_KPI'[KPIs]),
+    "CM1 %", "0.00%",
+    "CM2 %", "0.00%",
+    "EBIT %", "0.00%",
+    "Material ratio (incl. 3rd party) in %", "0.00%",
+    "Budget Qty", "#,##0",
+    "Sales qty - prev. month", "#,##0",
+    "#,##0.00 €")
 
-HasMaterial = 
-IF(COUNTROWS(RELATEDTABLE('GM-report-H1_full_unpivot')) > 0, 1, 0)
